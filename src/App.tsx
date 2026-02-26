@@ -37,11 +37,11 @@ interface GameState {
 // --- Translations ---
 const translations = {
   en: {
-    title: "Chroma Vision",
+    title: "Yunbao Family's Game",
     score: "Score",
     time: "Time",
-    heroTitle: "Test your artistic perception.",
-    heroDesc: "Find the block with the slightly different shade. Difficulty increases with every correct choice. Designed for art students and color enthusiasts.",
+    heroTitle: "Yunbao Family's Color Challenge",
+    heroDesc: "Find the block with the slightly different shade. Difficulty increases with every correct choice. A fun challenge for the whole Yunbao family!",
     startBtn: "Start Challenge",
     sec60: "60 Seconds",
     visualTraining: "Visual Training",
@@ -49,7 +49,7 @@ const translations = {
     level: "Level",
     grid: "Grid",
     complete: "Challenge Complete",
-    profileReady: "Your visual acuity profile is ready.",
+    profileReady: "The Yunbao family's visual acuity profile is ready.",
     finalScore: "Final Score",
     colorSensitivity: "Color Sensitivity",
     visualPrecision: "Visual Precision",
@@ -60,17 +60,17 @@ const translations = {
     lastComparison: "Last Comparison",
     deltaDesc: "The difference between these two colors was only {delta}% in lightness.",
     tryAgain: "Try Again",
-    artEdition: "Art Student Edition",
-    precisionEngine: "v1.0.4 Precision Engine",
+    artEdition: "Yunbao Family Edition",
+    precisionEngine: "v1.0.5 Precision Engine",
     optimized: "Optimized for Retina",
-    lab: "Chroma Vision Lab",
+    lab: "Yunbao Vision Lab",
   },
   zh: {
-    title: "色彩视觉",
+    title: "云宝一家人的游戏",
     score: "得分",
     time: "时间",
-    heroTitle: "测试你的艺术感知力",
-    heroDesc: "在极其相似的色块中找出差异的那一个。难度随正确选择递增。专为艺术生和色彩爱好者设计。",
+    heroTitle: "云宝一家的色彩大挑战",
+    heroDesc: "在极其相似的色块中找出差异的那一个。难度随正确选择递增。云宝一家人快来比比看谁的眼力最好！",
     startBtn: "开始挑战",
     sec60: "60 秒限时",
     visualTraining: "视觉训练",
@@ -78,7 +78,7 @@ const translations = {
     level: "等级",
     grid: "网格",
     complete: "挑战完成",
-    profileReady: "你的视觉敏锐度报告已生成。",
+    profileReady: "云宝一家的视觉敏锐度报告已生成。",
     finalScore: "最终得分",
     colorSensitivity: "色彩敏感度",
     visualPrecision: "视觉精准度",
@@ -89,24 +89,52 @@ const translations = {
     lastComparison: "最后对比",
     deltaDesc: "这两个颜色之间的亮度差异仅为 {delta}%。",
     tryAgain: "再试一次",
-    artEdition: "艺术生专用版",
-    precisionEngine: "v1.0.4 精准引擎",
+    artEdition: "云宝一家人专用版",
+    precisionEngine: "v1.0.5 精准引擎",
     optimized: "针对视网膜屏优化",
-    lab: "色彩视觉实验室",
+    lab: "云宝视觉实验室",
   }
+};
+
+// --- Audio Utils ---
+const playPianoChord = (isCorrect: boolean) => {
+  const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+  if (!AudioContextClass) return;
+  
+  const ctx = new AudioContextClass();
+  const now = ctx.currentTime;
+  
+  const frequencies = isCorrect ? [261.63, 329.63, 392.00] : [130.81, 138.59, 146.83];
+  
+  frequencies.forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, now);
+    
+    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.start(now);
+    osc.stop(now + 1.5);
+  });
 };
 
 // --- Constants ---
 const INITIAL_TIME = 60;
-const MIN_DELTA = 1; // Minimum lightness difference
+const MIN_DELTA = 1;
 
 // --- Utils ---
 const colorToCSS = (c: Color) => `hsl(${c.h}, ${c.s}%, ${c.l}%)`;
 
 const generateColors = (level: number) => {
   const h = Math.floor(Math.random() * 360);
-  const s = Math.floor(Math.random() * 40) + 40; // 40-80% saturation
-  const l = Math.floor(Math.random() * 40) + 30; // 30-70% lightness
+  const s = Math.floor(Math.random() * 40) + 40;
+  const l = Math.floor(Math.random() * 40) + 30;
 
   const delta = Math.max(MIN_DELTA, 15 - Math.floor(level / 4));
   
@@ -186,8 +214,10 @@ export default function App() {
     if (state.status !== 'playing') return;
 
     if (index === state.diffIndex) {
+      playPianoChord(true);
       nextLevel(state.level, state.score);
     } else {
+      playPianoChord(false);
       setState(prev => ({
         ...prev,
         timeLeft: Math.max(0, prev.timeLeft - 3),
